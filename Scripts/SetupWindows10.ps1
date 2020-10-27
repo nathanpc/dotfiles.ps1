@@ -527,6 +527,71 @@ Function Disable-SearchAppInStore {
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Name "NoUseStoreOpenWith" -Type DWord -Value 1
 }
 
+# Show known file extensions
+Function Show-KnownExtensions {
+    If (Confirm-EnableWithUser "showing file extensions") {
+        Return
+    }
+
+	Write-Output "Showing known file extensions..."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "HideFileExt" -Type DWord -Value 0
+}
+
+# Show hidden files
+Function Show-HiddenFiles {
+    If (Confirm-EnableWithUser "showing hidden files") {
+        Return
+    }
+
+	Write-Output "Showing hidden files..."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Hidden" -Type DWord -Value 1
+}
+
+# Show This PC shortcut on desktop
+Function Show-ThisPCOnDesktop {
+    If (Confirm-EnableWithUser "showing This PC on Desktop") {
+        Return
+    }
+
+	Write-Output "Showing This PC shortcut on desktop..."
+	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu")) {
+		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu" -Name "{20D04FE0-3AEA-1069-A2D8-08002B30309D}" -Type DWord -Value 0
+	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel")) {
+		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" -Name "{20D04FE0-3AEA-1069-A2D8-08002B30309D}" -Type DWord -Value 0
+}
+
+# Show User Folder shortcut on desktop
+Function Show-UserFolderOnDesktop {
+    If (Confirm-EnableWithUser "showing User Folder on Desktop") {
+        Return
+    }
+
+	Write-Output "Showing User Folder shortcut on desktop..."
+	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu")) {
+		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu" -Name "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" -Type DWord -Value 0
+	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel")) {
+		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" -Name "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" -Type DWord -Value 0
+}
+
+# Disable creation of Thumbs.db thumbnail cache files
+Function Disable-ThumbsDB {
+    If (Confirm-DisableWithUser "creation of Thumbs.db") {
+        Return
+    }
+
+	Write-Output "Disabling creation of Thumbs.db..."
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "DisableThumbnailCache" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "DisableThumbsDBOnNetworkFolders" -Type DWord -Value 1
+}
+
 # Introduces the script.
 Write-Introduction
 
@@ -576,6 +641,15 @@ If (Confirm-WithUser "Now, let's work on some shell UI tweaks?") {
     Hide-TaskbarPeopleIcon
     Show-TrayIcons
     Disable-SearchAppInStore
+}
+
+# Explorer UI tweak settings.
+If (Confirm-WithUser "Now, let's work on some Explorer UI tweaks?") {
+    Show-KnownExtensions
+    Show-HiddenFiles
+    Show-ThisPCOnDesktop
+    Show-UserFolderOnDesktop
+    Disable-ThumbsDB
 }
 
 # Exit message.
