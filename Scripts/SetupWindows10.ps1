@@ -4,6 +4,7 @@
 #
 # Author: Nathan Campos <nathan@innoveworkshop.com>
 
+#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -50,6 +51,29 @@ Function Confirm-DisableWithUser {
         [String]$FeatureName
     )
     Return -Not (Confirm-WithUser "Do you want to disable $($FeatureName)?")
+}
+
+<#
+.SYNOPSIS
+Confirms if the user wants to enable something.
+
+.PARAMETER FeatureName
+Name of the functionality to enable.
+
+.OUTPUTS
+True if the user *doesn't* want to enable the functionality.
+
+.EXAMPLE
+If (Confirm-EnableWithUser "SMB 1.0") {
+    Return
+}
+#>
+Function Confirm-EnableWithUser {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [String]$FeatureName
+    )
+    Return -Not (Confirm-WithUser "Do you want to *enable* $($FeatureName)?")
 }
 
 <#
@@ -307,21 +331,144 @@ Function Disable-WAPPush {
 	Set-Service "dmwappushservice" -StartupType Disabled
 }
 
-# Executes everything in order.
+# Lower UAC level (disabling it completely would break apps)
+Function Set-UACLow {
+    If (Confirm-DisableWithUser "UAC popups all the time") {
+        Return
+    }
+
+	Write-Output "Lowering UAC level..."
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Type DWord -Value 0
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Type DWord -Value 0
+}
+
+# Disable implicit administrative shares
+Function Disable-AdminShares {
+    If (Confirm-DisableWithUser "implicit administrative shares") {
+        Return
+    }
+
+	Write-Output "Disabling implicit administrative shares..."
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "AutoShareWks" -Type DWord -Value 0
+}
+
+# Enable obsolete SMB 1.0 protocol - Disabled by default since 1709
+Function Enable-SMB1 {
+    If (Confirm-EnableWithUser "SMB 1.0") {
+        Return
+    }
+
+	Write-Output "Enabling SMB 1.0 protocol..."
+	Set-SmbServerConfiguration -EnableSMB1Protocol $true -Force
+}
+
+# Disable Meltdown (CVE-2017-5754) compatibility flag
+Function Disable-MeltdownCompatFlag {
+    If (Confirm-DisableWithUser "Meltdown mitigations") {
+        Return
+    }
+
+	Write-Output "Disabling Meltdown (CVE-2017-5754) compatibility flag..."
+	Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\QualityCompat" -Name "cadca5fe-87d3-4b96-b7fb-a231484277cc" -ErrorAction SilentlyContinue
+}
+
+# Disable Windows Update automatic restart
+# Note: This doesn't disable the need for the restart but rather tries to ensure that the restart doesn't happen in the least expected moment. Allow the machine to restart as soon as possible anyway.
+Function Disable-UpdateRestart {
+    If (Confirm-DisableWithUser "forced update restart") {
+        Return
+    }
+
+	Write-Output "Disabling Windows Update automatic restart..."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Force | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoRebootWithLoggedOnUsers" -Type DWord -Value 1
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUPowerManagement" -Type DWord -Value 0
+}
+
+# Disable Autoplay
+Function Disable-Autoplay {
+    If (Confirm-DisableWithUser "Autoplay") {
+        Return
+    }
+
+	Write-Output "Disabling Autoplay..."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" -Name "DisableAutoplay" -Type DWord -Value 1
+}
+
+# Disable Autorun for all drives
+Function Disable-Autorun {
+    If (Confirm-DisableWithUser "Autorun for all drives") {
+        Return
+    }
+
+	Write-Output "Disabling Autorun for all drives..."
+	If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
+		New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoDriveTypeAutoRun" -Type DWord -Value 255
+}
+
+# Disable scheduled defragmentation task
+Function Disable-Defragmentation {
+    If (Confirm-DisableWithUser "scheduled defragmentation") {
+        Return
+    }
+
+	Write-Output "Disabling scheduled defragmentation..."
+	Disable-ScheduledTask -TaskName "Microsoft\Windows\Defrag\ScheduledDefrag" | Out-Null
+}
+
+# Stop and disable Windows Search indexing service
+Function Disable-Indexing {
+    If (Confirm-DisableWithUser "Windows Search indexing service") {
+        Return
+    }
+
+	Write-Output "Stopping and disabling Windows Search indexing service..."
+	Stop-Service "WSearch" -WarningAction SilentlyContinue
+	Set-Service "WSearch" -StartupType Disabled
+}
+
+# Introduces the script.
 Write-Introduction
-Write-Ouput "Let's start by disabling the spying and privacy-invading stuff..."
-Disable-Telemetry
-Disable-WiFiSense
-Disable-SmartScreen
-Disable-WebSearch
-Disable-AppSuggestions
-Disable-ActivityHistory
-Disable-LocationTracking
-Disable-AutoMapUpdates
-Disable-UserFeedback
-Disable-TailoredExperiences
-Disable-AdvertisingID
-Disable-Cortana
-Set-P2PUpdateLocal
-Disable-DiagnosticsTracking
-Disable-WAPPush
+
+# Privacy settings.
+If (Confirm-WithUser "Let's start by disabling the spying and privacy-invading stuff?") {
+    Disable-Telemetry
+    Disable-WiFiSense
+    Disable-SmartScreen
+    Disable-WebSearch
+    Disable-AppSuggestions
+    Disable-ActivityHistory
+    Disable-LocationTracking
+    Disable-AutoMapUpdates
+    Disable-UserFeedback
+    Disable-TailoredExperiences
+    Disable-AdvertisingID
+    Disable-Cortana
+    Set-P2PUpdateLocal
+    Disable-DiagnosticsTracking
+    Disable-WAPPush
+}
+
+# Security settings.
+If (Confirm-WithUser "Now, let's work on some security settings?") {
+    Set-UACLow
+    Disable-AdminShares
+    Enable-SMB1
+    Disable-MeltdownCompatFlag
+}
+
+# Service tweak settings.
+If (Confirm-WithUser "Now, let's work on some service tweaks?") {
+    Disable-UpdateRestart
+    Disable-Autoplay
+    Disable-Autorun
+    Disable-Defragmentation
+    Disable-Indexing
+}
+
+# Exit message.
+Write-Output "That's all for now!"
