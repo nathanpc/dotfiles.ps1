@@ -431,6 +431,102 @@ Function Disable-Indexing {
 	Set-Service "WSearch" -StartupType Disabled
 }
 
+# Disable Sticky keys prompt
+Function Disable-StickyKeys {
+    If (Confirm-DisableWithUser "Sticky Keys") {
+        Return
+    }
+
+	Write-Output "Disabling Sticky keys prompt..."
+	Set-ItemProperty -Path "HKCU:\Control Panel\Accessibility\StickyKeys" -Name "Flags" -Type String -Value "506"
+}
+
+# Show Task Manager details - Applicable to 1607 and later - Although this functionality exist even in earlier versions, the Task Manager's behavior is different there and is not compatible with this tweak
+Function Show-TaskManagerDetails {
+    If (Confirm-EnableWithUser "Task Manager details") {
+        Return
+    }
+
+	Write-Output "Showing task manager details..."
+	$taskmgr = Start-Process -WindowStyle Hidden -FilePath taskmgr.exe -PassThru
+	Do {
+		Start-Sleep -Milliseconds 100
+		$preferences = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\TaskManager" -Name "Preferences" -ErrorAction SilentlyContinue
+	} Until ($preferences)
+	Stop-Process $taskmgr
+	$preferences.Preferences[28] = 0
+	Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\TaskManager" -Name "Preferences" -Type Binary -Value $preferences.Preferences
+}
+
+# Show file operations details
+Function Show-FileOperationsDetails {
+    If (Confirm-EnableWithUser "file operations details") {
+        Return
+    }
+
+	Write-Output "Showing file operations details..."
+	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager")) {
+		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager" | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager" -Name "EnthusiastMode" -Type DWord -Value 1
+}
+
+# Hide Taskbar Search icon / box
+Function Hide-TaskbarSearch {
+    If (Confirm-DisableWithUser "taskbar Search icon/box") {
+        Return
+    }
+
+	Write-Output "Hiding Taskbar Search icon / box..."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
+}
+
+# Hide Task View button
+Function Hide-TaskView {
+    If (Confirm-DisableWithUser "task view button") {
+        Return
+    }
+
+	Write-Output "Hiding Task View button..."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowTaskViewButton" -Type DWord -Value 0
+}
+
+# Hide Taskbar People icon
+Function Hide-TaskbarPeopleIcon {
+    If (Confirm-DisableWithUser "taskbar People icon") {
+        Return
+    }
+
+	Write-Output "Hiding People icon..."
+	If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People")) {
+		New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" | Out-Null
+	}
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" -Name "PeopleBand" -Type DWord -Value 0
+}
+
+# Show all tray icons
+Function Show-TrayIcons {
+    If (Confirm-EnableWithUser "showing all tray icons") {
+        Return
+    }
+
+	Write-Output "Showing all tray icons..."
+	Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "EnableAutoTray" -Type DWord -Value 0
+}
+
+# Disable search for app in store for unknown extensions
+Function Disable-SearchAppInStore {
+    If (Confirm-DisableWithUser "search for app in store for unknown extensions") {
+        Return
+    }
+
+	Write-Output "Disabling search for app in store for unknown extensions..."
+	If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer")) {
+		New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" | Out-Null
+	}
+	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Name "NoUseStoreOpenWith" -Type DWord -Value 1
+}
+
 # Introduces the script.
 Write-Introduction
 
@@ -468,6 +564,18 @@ If (Confirm-WithUser "Now, let's work on some service tweaks?") {
     Disable-Autorun
     Disable-Defragmentation
     Disable-Indexing
+}
+
+# UI tweak settings.
+If (Confirm-WithUser "Now, let's work on some shell UI tweaks?") {
+    Disable-StickyKeys
+    Show-TaskManagerDetails
+    Show-FileOperationsDetails
+    Hide-TaskbarSearch
+    Hide-TaskView
+    Hide-TaskbarPeopleIcon
+    Show-TrayIcons
+    Disable-SearchAppInStore
 }
 
 # Exit message.
