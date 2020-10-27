@@ -4,8 +4,6 @@
 #
 # Author: Nathan Campos <nathan@innoveworkshop.com>
 
-#Requires -RunAsAdministrator
-
 <#
 .SYNOPSIS
 Comfirms an action with the user.
@@ -134,11 +132,35 @@ Function Write-Introduction {
     Write-Output ""
     Write-Output "This script will guide you through the setup and debloating of your system."
 
+    Require-AdminPrivileges
     If (-Not (Confirm-WithUser "Shall we begin?")) {
         Exit
     }
 
     Write-Output ""
+}
+
+# Creates a system restore point just in case.
+Function Create-RestorePoint {
+    If (-Not (Confirm-WithUser "Do you want to create a system restore point?")) {
+        Return
+    }
+
+    Write-Output "Creating Restore Point..."
+    Enable-ComputerRestore -Drive "C:\"
+    Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
+}
+
+# Relaunch the script with administrator privileges
+Function Require-AdminPrivileges {
+	If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+        If (-Not (Confirm-WithUser "This script requires Administrator priviliges, shall we switch to an admin PowerShell window?")) {
+            Exit
+        }
+
+		Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $PSCommandArgs" -WorkingDirectory $pwd -Verb RunAs
+		Exit
+	}
 }
 
 # Disable Telemetry
@@ -816,6 +838,7 @@ Function Remove-TaskbarIcons {
 
 # Introduces the script.
 Write-Introduction
+Create-RestorePoint
 
 # Privacy settings.
 If (Confirm-WithUser "Let's start by disabling the spying and privacy-invading stuff?") {
