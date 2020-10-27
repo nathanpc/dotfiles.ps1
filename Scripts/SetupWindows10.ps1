@@ -101,6 +101,29 @@ Function Confirm-UninstallWithUser {
 
 <#
 .SYNOPSIS
+Confirms if the user wants to install something.
+
+.PARAMETER FeatureName
+Name of the functionality to uninstall.
+
+.OUTPUTS
+True if the user *doesn't* want to install the functionality.
+
+.EXAMPLE
+If (Confirm-InstallWithUser "WSL") {
+    Return
+}
+#>
+Function Confirm-InstallWithUser {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [String]$FeatureName
+    )
+    Return -Not (Confirm-WithUser "Do you want to install $($FeatureName)?")
+}
+
+<#
+.SYNOPSIS
 A little welcome message and a confirmation with the user to begin the process.
 #>
 Function Write-Introduction {
@@ -745,6 +768,21 @@ Function Disable-AdobeFlash {
 	Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Addons" -Name "FlashPlayerEnabled" -Type DWord -Value 0
 }
 
+# Install Linux Subsystem - Applicable to 1607 or newer
+Function Install-LinuxSubsystem {
+    If (Confirm-InstallWithUser "Windows Subsystem for Linux") {
+        Return
+    }
+
+	Write-Output "Installing Linux Subsystem..."
+	If ([System.Environment]::OSVersion.Version.Build -eq 14393) {
+		# 1607 needs developer mode to be enabled
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" -Name "AllowDevelopmentWithoutDevLicense" -Type DWord -Value 1
+		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" -Name "AllowAllTrustedApps" -Type DWord -Value 1
+	}
+	Enable-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsystem-Linux" -NoRestart -WarningAction SilentlyContinue | Out-Null
+}
+
 # Introduces the script.
 Write-Introduction
 
@@ -811,6 +849,11 @@ If (Confirm-WithUser "Now, let's remove some bloatware?") {
     Uninstall-ThirdPartyBloat
     Disable-XboxFeatures
     Disable-AdobeFlash
+}
+
+# Advanced tweaks.
+If (Confirm-WithUser "Now, let's do some advanced user settings?") {
+    Install-LinuxSubsystem
 }
 
 # Exit message.
