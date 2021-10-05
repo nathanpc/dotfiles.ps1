@@ -113,8 +113,8 @@ Function New-MacJunkFileScreen {
 # Check for the required arguments.
 If ($args.Count -lt 1) {
     Write-Error "No directory to create the Mac junk file screen was passed to the script."
-    Write-Output "Usage: Block-FsrmMacJunk <PathToScreen>`n"
-
+    Write-Output "Usage: Block-FsrmMacJunk <PathToScreen>"
+    Write-Output
     Write-Output "    PathToScreen    Path of the directory that you want to screen for Mac junk."
     Exit
 }
