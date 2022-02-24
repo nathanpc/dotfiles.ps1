@@ -86,8 +86,7 @@ Function Add-DNSEntryOrSetIfExisting {
 
 <#
 .SYNOPSIS
-Adds a new DNS entry to the to the specified server. If it already exists its
-IP address just gets updated.
+Goes through the AD computers adding/updating their entries in the DNS server.
 
 .PARAMETER ADServer
 Active Directory server.
