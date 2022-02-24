@@ -74,7 +74,7 @@ Function Add-DNSEntryOrSetIfExisting {
             -OldInputObject $OldRecord -ZoneName $ZoneName -ComputerName $ComputerName
 
         Write-Host ("[UPDATE]`t $FullName `t`t {0}" -f `
-            "$($ExistingRecord.IPAddress) -> $($Computer.IPv4Address)")
+            "$($ExistingRecord.IPAddress) `t`t $IPAddress")
     } else {
         # New record!
         Add-DnsServerResourceRecordA -Name $Name -ZoneName $ZoneName `
@@ -125,4 +125,5 @@ Function Set-ADComputersDNSAliases {
 }
 
 # Go for it.
-Set-ADComputersDNSAliases -ADServer $ADServer -DNSServer $DNSServer -ZoneName $ZoneName
+Set-ADComputersDNSAliases -ADServer $ADServer -DNSServer $DNSServer `
+    -ZoneName $ZoneName
