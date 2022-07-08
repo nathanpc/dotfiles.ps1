@@ -45,9 +45,6 @@ Function prompt() {
     Return "PS $(Get-PrettyPath)$('>' * ($nestedPromptLevel + 1)) ";
 }
 
-# Have a nice suggestions menu appear when we want to tab complete something.
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-
 # Make sure we don't conflict with the proper wget command.
 If (Test-Path Alias:wget) {
 	Remove-Item Alias:wget
