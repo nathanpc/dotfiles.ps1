@@ -42,7 +42,25 @@ The prompt string that we are so familiar with.
 A pretty prompt string.
 #>
 Function prompt() {
-    Return "PS $(Get-PrettyPath)$('>' * ($nestedPromptLevel + 1)) ";
+    $Status = $?
+    $Path = Get-PrettyPath
+    $PS1 = ""
+
+    # Color codes.
+    $ESC    = [char]27
+    $Reset  = "$ESC[0m"
+    $Red    = "$ESC[31m"
+    $Yellow = "$ESC[33m"
+    $Cyan   = "$ESC[36m"
+
+    # Build up the prompt
+    $PS1 += If ($Status) { $Cyan } Else { $Red }
+    $PS1 += "PS${Reset} "
+    $PS1 += "${Yellow}${Path}"
+    $PS1 += If ($Path.StartsWith("\\")) { $Red } Else { $Reset }
+    $PS1 += "$('>' * ($nestedPromptLevel + 1))${Reset} "
+
+    Return $PS1;
 }
 
 # Make sure we don't conflict with the proper wget command.
