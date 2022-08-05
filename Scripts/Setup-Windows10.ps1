@@ -413,83 +413,6 @@ Function Set-VisualTweaks {
 
 <#
 .SYNOPSIS
-Cleans up the Start menu by getting rid of all the useless tiles.
-#>
-Function Remove-StartMenuTiles {
-    Write-Host "Removing Start Menu tiles..."
-
-    # Set the default start menu and taskbar layout.
-    $DEFAULT_START_MENU_LAYOUT = @"
-    <LayoutModificationTemplate xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" Version="1" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification">
-        <LayoutOptions StartTileGroupCellWidth="6" />
-        <DefaultLayoutOverride>
-            <StartLayoutCollection>
-                <defaultlayout:StartLayout GroupCellWidth="6" />
-            </StartLayoutCollection>
-        </DefaultLayoutOverride>
-        <CustomTaskbarLayoutCollection>
-            <defaultlayout:TaskbarLayout>
-                <taskbar:TaskbarPinList>
-                    <taskbar:UWA AppUserModelID="Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge" />
-                    <taskbar:DesktopApp DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\System Tools\File Explorer.lnk" />
-                </taskbar:TaskbarPinList>
-            </defaultlayout:TaskbarLayout>
-        </CustomTaskbarLayoutCollection>
-    </LayoutModificationTemplate>
-"@
-    $defaultLayoutFile = "C:\Users\Default\AppData\Local\Microsoft\Windows\Shell\DefaultLayouts.xml"
-    Set-Content -Path $defaultLayoutFile -Value $DEFAULT_START_MENU_LAYOUT
-
-    # Create the clean system start menu layout.
-    $START_MENU_LAYOUT = @"
-    <LayoutModificationTemplate xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" Version="1" xmlns:taskbar="http://schemas.microsoft.com/Start/2014/TaskbarLayout" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification">
-        <LayoutOptions StartTileGroupCellWidth="6" />
-        <DefaultLayoutOverride>
-            <StartLayoutCollection>
-                <defaultlayout:StartLayout GroupCellWidth="6" />
-            </StartLayoutCollection>
-        </DefaultLayoutOverride>
-    </LayoutModificationTemplate>
-"@
-
-    # Delete the start menu layout file if it already exists and populate it with the blank layout.
-    $layoutFile = "C:\Windows\StartMenuLayout.xml"
-    If (Test-Path $layoutFile) {
-        Remove-Item $layoutFile
-    }
-    $START_MENU_LAYOUT | Out-File $layoutFile -Encoding ASCII
-
-    # Assign the Start layout and force it to apply with "LockedStartLayout" at both the machine and user level.
-    $regAliases = @("HKLM", "HKCU")
-    ForEach ($regAlias in $regAliases){
-        $basePath = $regAlias + ":\SOFTWARE\Policies\Microsoft\Windows"
-        $keyPath = $basePath + "\Explorer"
-
-        If (!(Test-Path -Path $keyPath)) {
-            New-Item -Path $basePath -Name "Explorer"
-        }
-
-        Set-ItemProperty -Path $keyPath -Name "LockedStartLayout" -Value 1
-        Set-ItemProperty -Path $keyPath -Name "StartLayoutFile" -Value $layoutFile
-    }
-
-    # Restart Explorer, open the Start Menu (necessary to load the new layout), and give it a few seconds to process.
-    Stop-Process -name explorer
-    Start-Sleep -s 5
-    $wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('^{ESCAPE}')
-    Start-Sleep -s 5
-
-    # Enable the ability to pin items again by disabling "LockedStartLayout".
-    ForEach ($regAlias in $regAliases){
-        $basePath = $regAlias + ":\SOFTWARE\Policies\Microsoft\Windows"
-        $keyPath = $basePath + "\Explorer"
-
-        Set-ItemProperty -Path $keyPath -Name "LockedStartLayout" -Value 0
-    }
-}
-
-<#
-.SYNOPSIS
 Disables Microsoft's useless personal assistant.
 #>
 Function Disable-Cortana {
@@ -729,7 +652,7 @@ Function Disable-AdditionalServices {
         "XblGameSave"                                  # Xbox Live Game Save Service
         "XboxNetApiSvc"                                # Xbox Live Networking Service
         "XboxGipSvc"                                   # Xbox Accessory Management Service
-        "ndu"                                          # Windows Network Data Usage Monitor
+        #"ndu"                                          # Windows Network Data Usage Monitor
         #"WerSvc"                                      # Windows Error Reporting
         #"Spooler"                                     # Printer
         "Fax"                                          # Fax
@@ -849,7 +772,6 @@ New-RestorePoint
 Disable-AdditionalServices
 Disable-UselessServices
 Set-VisualTweaks
-Remove-StartMenuTiles
 Disable-Cortana
 Remove-BloatwareApplications
 Disable-WindowsUpdateRestart
