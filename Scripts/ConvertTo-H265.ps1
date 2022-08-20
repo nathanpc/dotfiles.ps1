@@ -7,15 +7,21 @@
 Param(
     [Parameter(Mandatory = $false)]
     [String]$Path = ".\",
+    [Parameter(Mandatory = $false)]
+    [String]$DestPath = ".\",
     [Switch]$Clean = $false,
-    [Switch]$SkipConvert = $false
+    [Switch]$SkipConvert = $false,
+    [Parameter(Mandatory = $false)]
+    [String]$SourceExt = "mov",
+    [Parameter(Mandatory = $false)]
+    [String]$DestExt = "mp4"
 )
 
 # Go through MOV files.
-Get-ChildItem $Path -Filter *.mov | ForEach-Object {
+Get-ChildItem $Path -Filter "*.$SourceExt" | ForEach-Object {
     # Get the input and output file paths.
     $InFile = $_.FullName
-    $OutFile = [IO.Path]::ChangeExtension($InFile, "mp4")
+    $OutFile = [IO.Path]::ChangeExtension((Join-Path -Path $DestPath -ChildPath $_.Name), $DestExt)
     
     # Actually perform the conversion.
     If (!$SkipConvert) {
