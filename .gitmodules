@@ -1,0 +1,3 @@
+[submodule "Scripts/Setup-Windows10"]
+	path = Scripts/Setup-Windows10
+	url = git@github.com:nathanpc/Setup-Windows10.ps1.git
