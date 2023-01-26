@@ -78,6 +78,18 @@ Function emacs() {
 	bg emacs @args
 }
 
+# We sure love our symbolic links from Unixland...
+Function ln() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [String]$Target,
+        [Parameter(Mandatory = $true)]
+        [String]$Path
+    )
+
+    New-Item -ItemType SymbolicLink -Path $Path -Target $Target
+}
+
 <#
 .SYNOPSIS
 Converts any integer to its hexadecimal representation in a string.
