@@ -5,4 +5,4 @@
 
 # Make vim the default editor for everything.
 $env:EDITOR = "vim"
-$env:GIT_EDITOR = $env:EDITOR
+$env:GIT_EDITOR = "C:\\Program\ Files\\Vim\\vim90\\vim.exe"
