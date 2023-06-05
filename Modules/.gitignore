@@ -1,0 +1,4 @@
+# Ignore installed modules.
+Microsoft.*/
+posh-git/
+

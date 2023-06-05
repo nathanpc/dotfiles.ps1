@@ -40,3 +40,24 @@ Function sudo() {
         Start-Process $args[0] -ArgumentList $args[1..$args.Length] -verb "runAs"
     }
 }
+
+# Prevent Git alias conflicts with built-in aliases.
+Remove-Alias gc -Force -ErrorAction SilentlyContinue
+Remove-Alias gps -Force -ErrorAction SilentlyContinue
+
+# Git aliases.
+Function gs {
+	git status $args
+}
+Function ga {
+	git add $args
+}
+Function gc {
+	git commit $args
+}
+Function gps {
+	git push $args
+}
+Function gpl {
+	git pull $args
+}

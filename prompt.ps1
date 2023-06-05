@@ -58,6 +58,7 @@ Function prompt() {
     $PS1 += "PS${Reset} "
     $PS1 += "${Yellow}${Path}"
     $PS1 += If ($Path.StartsWith("\\")) { $Red } Else { $Reset }
+    $PS1 += Write-VcsStatus
     $PS1 += "$('>' * ($nestedPromptLevel + 1))${Reset} "
 
     Return $PS1;
