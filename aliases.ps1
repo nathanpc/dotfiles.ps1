@@ -55,6 +55,12 @@ Function ga {
 Function gc {
 	git commit $args
 }
+Function gcm {
+	git commit -m $args
+}
+Function gdf {
+	git diff $args
+}
 Function gps {
 	git push $args
 }
