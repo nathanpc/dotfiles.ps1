@@ -44,10 +44,15 @@ Function sudo() {
 # Prevent Git alias conflicts with built-in aliases.
 Remove-Alias gc -Force -ErrorAction SilentlyContinue
 Remove-Alias gps -Force -ErrorAction SilentlyContinue
+Remove-Alias gcm -Force -ErrorAction SilentlyContinue
+Remove-Alias gl -Force -ErrorAction SilentlyContinue
 
 # Git aliases.
 Function gs {
 	git status $args
+}
+Function gl {
+	git log $args
 }
 Function glt {
 	git log --pretty=oneline --abbrev-commit --decorate --graph --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --all $args
