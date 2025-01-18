@@ -49,11 +49,17 @@ Remove-Alias gps -Force -ErrorAction SilentlyContinue
 Function gs {
 	git status $args
 }
+Function glt {
+	git log --pretty=oneline --abbrev-commit --decorate --graph --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --all $args
+}
 Function ga {
 	git add $args
 }
 Function gc {
 	git commit $args
+}
+Function gca {
+	git commit --amend $args
 }
 Function gcm {
 	git commit -m $args
